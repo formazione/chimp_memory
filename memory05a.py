@@ -77,7 +77,7 @@ def mouse_collision(sprite):
             bgd.fill((0, 255, 0))
             sprite.image.blit(bgd, (0, 0))
             num_order.append(sprite.number)
-            s.rect = pygame.Rect(0,0, 50, 50)
+            sprite.rect = pygame.Rect(-50, -50, 50, 50)
 
             # Check if you are wrong as you type
             if sprite.number != str(len(num_order)):
@@ -169,9 +169,12 @@ def main():
             if counter % 4 == 0:
                 play("click")
         for event in pygame.event.get():
+            # ========================================= QUIT
             if event.type == pygame.QUIT:
                 loop = 0
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    loop = 0
                 if event.key == pygame.K_s:
                     g.update()
                     screen.fill((0,0,0))

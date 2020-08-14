@@ -3,19 +3,19 @@ import random
 from glob import glob
 
 # all the possible positions for the numbers
-pos = [(x, y) for x in range(1, 16) for y in range(1, 16)] 
+pos = [(x, y) for x in range(1, 8) for y in range(1, 8)] 
 # print(pos)
-print(pos.pop(pos.index(random.choice(pos))))
+# print(pos.pop(pos.index(random.choice(pos))))
 # print(pos)
 
 def game_init():
     global screen, font
 
     pygame.init()
-    size = w, h = 800, 800
+    size = w, h = 400, 400
     screen = pygame.display.set_mode((size))
     pygame.display.set_caption("Memory Game")
-    font = pygame.font.SysFont("Arial", 32)
+    font = pygame.font.SysFont("Arial", 20)
 
 
 class Square(pygame.sprite.Sprite):
@@ -62,9 +62,9 @@ num_order = []
 score = 0
 
 bgd = pygame.Surface((50, 50))
-bgd.fill((255, 0, 0))
+bgd.fill((0, 0, 0))
 def mouse_collision(sprite):
-    global num_order, score, counter_on, max_count
+    global num_order, score, counter_on, max_count, saved_points
 
     if counter_on == 0:
         
@@ -77,13 +77,12 @@ def mouse_collision(sprite):
             bgd.fill((0, 255, 0))
             sprite.image.blit(bgd, (0, 0))
             num_order.append(sprite.number)
-            s.rect = pygame.Rect(0,0, 50, 50)
 
             # Check if you are wrong as you type
             if sprite.number != str(len(num_order)):
                 num_order = []
                 counter_on = 1
-                pygame.mouse.set_visible(False)
+                # pygame.mouse.set_visible(False)
                 g.update()
                 screen.fill((0,0,0))
                 bgd.fill((255, 0, 0))
@@ -92,17 +91,17 @@ def mouse_collision(sprite):
             print("fine")
             print(num_order)
             if num_order == [str(s.number) for s in g]:
-                score += 1
+                score += 1 + saved_points
                 print("You won - Score: " + str(score))
                 num_order = []
                 g.add(Square(len(g) + 1))
                 counter_on = 1
                 max_count = max_count + 10
-                pygame.mouse.set_visible(False)
+                # pygame.mouse.set_visible(False)
             else:
                 num_order = []
                 counter_on = 1
-                pygame.mouse.set_visible(False)
+                # pygame.mouse.set_visible(False)
             g.update()
             screen.fill((0,0,0))
             bgd.fill((255, 0, 0))
@@ -150,13 +149,16 @@ counter = 0
 counter_on = 1
 max_count = 100
 def main():
-    global counter_on, counter, max_count
-
+    """
+    saved_points are the score that you get if you answer before the counter goes to zero
+    """
+    global counter_on, counter, max_count, saved_points
+    pygame.event.set_grab(True)
     game_init()
     squares_init()
     clock = pygame.time.Clock()
     loop = 1
-    pygame.mouse.set_visible(False)
+    # pygame.mouse.set_visible(False)
     soundtrack("sounds/soave.ogg")
     while loop:
         screen.fill((0, 0, 0))
@@ -176,17 +178,33 @@ def main():
                     g.update()
                     screen.fill((0,0,0))
             if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                for s in g:
+                    if s.rect.collidepoint(x, y):
+                        text = font.render("Bonus: " + str(max_count - counter), 1, (255, 244, 0))
+                        screen.blit(text, (200, 0))
+                        counter_on = 0
+                        s.image.blit(bgd, (0, 0))
+                        saved_points = max_count - score
+                        counter = 0
+                        counter_on = 0
+                for s in g:
+                    s.image.blit(bgd, (0, 0))
+                    counter = 0
+                    counter_on = 0
+
                 for s in g:
                     mouse_collision(s)      
         g.draw(screen)
         # Hides the number...
+
         if counter == max_count:
             for s in g:
                 s.image.blit(bgd, (0, 0))
                 counter = 0
                 counter_on = 0
 
-                pygame.mouse.set_visible(True)
+                # pygame.mouse.set_visible(True)
         pygame.display.update()
         clock.tick(20)
 

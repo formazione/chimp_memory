@@ -1,0 +1,13 @@
+v. 801 14.8.2020
+
+bonus in main() and collision()
+	bonus = max_count - counter
+
+	The quicker you click the more the bonus.
+	If you win (i win: in collision()) is added to score.
+
+
+to do:
+- save max score on txt
+- new music soundtracks random
+- new sounds for win and lose
