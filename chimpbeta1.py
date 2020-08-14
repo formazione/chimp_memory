@@ -14,7 +14,7 @@ def game_init():
     pygame.init()
     size = w, h = 400, 400
     screen = pygame.display.set_mode((size))
-    pygame.display.set_caption("Memory Game")
+    pygame.display.set_caption("Chimp Memory Game")
     font = pygame.font.SysFont("Arial", 20)
 
 
@@ -55,56 +55,71 @@ class Square(pygame.sprite.Sprite):
         return x, y
 
 
-# global
 
 g = pygame.sprite.Group()
 num_order = []
 score = 0
-
+# This covers the numbers...
 bgd = pygame.Surface((50, 50))
-bgd.fill((0, 0, 0))
+bgd.fill((255, 0, 0))
+
+
+def hide_cards():
+    for sprite in g:
+        bgd.fill((0, 255, 0))
+        sprite.image.blit(bgd, (0, 0))
+
+
 def mouse_collision(sprite):
-    global num_order, score, counter_on, max_count, saved_points
+    global num_order, score, counter_on, max_count, cards_visible
+    global bonus
 
-    if counter_on == 0:
-        
-        x, y = pygame.mouse.get_pos()
-        if sprite.rect.collidepoint(x, y):
-            play("click")
-            print("touched")
-            print(sprite.rect.collidepoint(x, y))
-            print(sprite.number)
-            bgd.fill((0, 255, 0))
-            sprite.image.blit(bgd, (0, 0))
-            num_order.append(sprite.number)
 
-            # Check if you are wrong as you type
-            if sprite.number != str(len(num_order)):
-                num_order = []
-                counter_on = 1
-                # pygame.mouse.set_visible(False)
-                g.update()
-                screen.fill((0,0,0))
-                bgd.fill((255, 0, 0))
+    # Check the collision only when conter is off
+    x, y = pygame.mouse.get_pos()
+    if sprite.rect.collidepoint(x, y):
+        play("click")
+        print("touched")
+        print(sprite.rect.collidepoint(x, y))
+        print(sprite.number)
+        # bgd.fill((0, 255, 0))
+        # sprite.image.blit(bgd, (0, 0))
+        num_order.append(sprite.number)
+        sprite.rect = pygame.Rect(-50, -50, 50, 50)
 
-        if len(num_order) == len(g):
-            print("fine")
-            print(num_order)
-            if num_order == [str(s.number) for s in g]:
-                score += 1 + saved_points
-                print("You won - Score: " + str(score))
-                num_order = []
-                g.add(Square(len(g) + 1))
-                counter_on = 1
-                max_count = max_count + 10
-                # pygame.mouse.set_visible(False)
-            else:
-                num_order = []
-                counter_on = 1
-                # pygame.mouse.set_visible(False)
+        # Check if you are wrong as you type
+        if sprite.number != str(len(num_order)):
+            num_order = []
+            counter_on = 1
+            # pygame.mouse.set_visible(False)
             g.update()
             screen.fill((0,0,0))
             bgd.fill((255, 0, 0))
+
+    if len(num_order) == len(g):
+        print("fine")
+        print(num_order)
+        # =========================== YOU GUESSED ========== Score: add bonus for quick click
+        win = num_order == [str(s.number) for s in g]
+        if win:
+            # bonus is for clicking before counter stops
+            # when you click... it memories the bonus in main()
+            score += 100 + bonus
+            print("You won - Score: " + str(score))
+            num_order = []
+            g.add(Square(len(g) + 1))
+            counter_on = 1
+            max_count = max_count + 10
+            cards_visible = 1
+            # pygame.mouse.set_visible(False)
+        else:
+            num_order = []
+            counter_on = 1
+            cards_visible = 1
+            # pygame.mouse.set_visible(False)
+        g.update()
+        screen.fill((0,0,0))
+        bgd.fill((255, 0, 0))
 
 
 ######################
@@ -148,12 +163,11 @@ def squares_init():
 counter = 0
 counter_on = 1
 max_count = 100
+cards_visible = 1
 def main():
-    """
-    saved_points are the score that you get if you answer before the counter goes to zero
-    """
-    global counter_on, counter, max_count, saved_points
-    pygame.event.set_grab(True)
+    global counter_on, counter, max_count, cards_visible
+    global bonus
+
     game_init()
     squares_init()
     clock = pygame.time.Clock()
@@ -171,38 +185,35 @@ def main():
             if counter % 4 == 0:
                 play("click")
         for event in pygame.event.get():
+            # ========================================= QUIT
             if event.type == pygame.QUIT:
                 loop = 0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
+                    loop = 0
+                if event.key == pygame.K_s:
                     g.update()
                     screen.fill((0,0,0))
             if event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
-                for s in g:
-                    if s.rect.collidepoint(x, y):
-                        text = font.render("Bonus: " + str(max_count - counter), 1, (255, 244, 0))
-                        screen.blit(text, (200, 0))
-                        counter_on = 0
-                        s.image.blit(bgd, (0, 0))
-                        saved_points = max_count - score
-                        counter = 0
-                        counter_on = 0
-                for s in g:
-                    s.image.blit(bgd, (0, 0))
-                    counter = 0
+                # Click mouse and stop the timer and hide the cards
+                if cards_visible:
+                    hide_cards()
+                    # bonus to click early: add to score if win
+                    bonus = max_count - counter
+                    cards_visible = 0
                     counter_on = 0
-
+                    counter = 0
+                # This checks the cards you hit
                 for s in g:
-                    mouse_collision(s)      
+                    mouse_collision(s)    
+
+
         g.draw(screen)
         # Hides the number...
-
         if counter == max_count:
-            for s in g:
-                s.image.blit(bgd, (0, 0))
-                counter = 0
-                counter_on = 0
+            hide_cards()
+            counter = 0
+            counter_on = 0
 
                 # pygame.mouse.set_visible(True)
         pygame.display.update()
