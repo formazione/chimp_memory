@@ -1,0 +1,1 @@
+pyinstaller --onefile chimp101.py
